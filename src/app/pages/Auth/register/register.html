@@ -1,0 +1,63 @@
+<div class="container">
+
+  <!-- LADO IZQUIERDO (IMAGEN) -->
+  <div class="hero">
+    <div class="overlay">
+      <h1>Comience su viaje hacia la <span>serenidad</span></h1>
+      <p>Un espacio diseñado para reconectar con sus sentidos.</p>
+    </div>
+  </div>
+
+  <!-- LADO DERECHO (FORMULARIO) -->
+  <div class="form-container">
+
+    <div class="logo">
+      <h2>SPA APP</h2>
+    </div>
+
+    <div class="header">
+      <h3>Crear Cuenta</h3>
+      <p>Ingrese sus datos</p>
+    </div>
+
+    <form (ngSubmit)="register()">
+
+      <!-- Mensaje de error -->
+     <app-alert [mensaje]="errorMessage" tipo="error"></app-alert>
+
+      <div class="input-group">
+        <label>Nombre Completo</label>
+        <input type="text" placeholder="Nombre completo" [(ngModel)]="nombre" name="nombre" required>
+      </div>
+
+      <div class="input-group">
+        <label>Correo Electrónico</label>
+        <input type="email" placeholder="correo@email.com" [(ngModel)]="correo" name="correo" required>
+      </div>
+
+      <div class="row">
+        <div class="input-group">
+          <label>Contraseña</label>
+          <input type="password" [(ngModel)]="password" name="password" required>
+        </div>
+
+        <div class="input-group">
+          <label>Confirmar</label>
+          <input type="password" [(ngModel)]="confirmPassword" name="confirmPassword" required>
+        </div>
+      </div>
+
+      <button type="submit" class="btn" [disabled]="isLoading">
+        {{ isLoading ? 'Creando cuenta...' : 'Crear Cuenta' }}
+      </button>
+
+      <div class="login-link">
+        <span>¿Ya tienes cuenta? </span>
+        <a (click)="irAlLogin()" style="cursor: pointer;">Iniciar sesión</a>
+      </div>
+
+    </form>
+
+  </div>
+
+</div>
