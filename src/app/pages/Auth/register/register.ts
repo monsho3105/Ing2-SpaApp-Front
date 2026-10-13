@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink} from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AlertComponent } from '../../../components/alert/alert';
-import { environment } from '../../../../environments/environment';
+import { environment } from 'environments/environment';
 
 @Component({
   selector: 'app-register',

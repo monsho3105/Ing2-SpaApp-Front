@@ -1,0 +1,182 @@
+<header class="navbar">
+
+  <div class="navbar__left">
+    <span class="navbar__brand">SpaApp</span>
+  </div>
+
+  <nav class="navbar__nav">
+
+    <!-- ADMIN -->
+    <ng-container *ngIf="esAdmin">
+      <a class="navbar__link"
+        [class.navbar__link--active]="paginaActiva === 'inicio'"
+        [routerLink]="['/dashboard/admin']">Inicio</a>
+      <a class="navbar__link"
+        [class.navbar__link--active]="paginaActiva === 'agenda'"
+        [routerLink]="['/dashboard/admin/agenda']">Agenda</a>
+      <a class="navbar__link"
+        [class.navbar__link--active]="paginaActiva === 'servicios'"
+        [routerLink]="['/dashboard/admin/servicios']">Servicios</a>
+      <a class="navbar__link"
+        [class.navbar__link--active]="paginaActiva === 'usuarios'"
+        [routerLink]="['/dashboard/admin/usuarios']">Usuarios</a>
+      <a class="navbar__link"
+        [class.navbar__link--active]="paginaActiva === 'reservas'"
+        [routerLink]="['/dashboard/admin/reservas']">Reservas</a>
+      <a class="navbar__link"
+        [class.navbar__link--active]="paginaActiva === 'facturacion'"
+        [routerLink]="['/dashboard/admin/facturacion']">Facturación</a>
+      <a class="navbar__link"
+        [class.navbar__link--active]="paginaActiva === 'configuracion'"
+        [routerLink]="['/dashboard/configuracion']">Configuración</a>
+    </ng-container>
+
+    <!-- RECEPCIONISTA -->
+    <ng-container *ngIf="esRecepcionista">
+      <a class="navbar__link"
+        [class.navbar__link--active]="paginaActiva === 'inicio'"
+        [routerLink]="['/dashboard/recepcionista']">Inicio</a>
+      <a class="navbar__link"
+        [class.navbar__link--active]="paginaActiva === 'agenda'"
+        [routerLink]="['/dashboard/recepcionista/agenda']">Agenda</a>
+      <a class="navbar__link"
+        [class.navbar__link--active]="paginaActiva === 'reservas'"
+        [routerLink]="['/dashboard/recepcionista/reservas']">Reservas</a>
+      <a class="navbar__link"
+        [class.navbar__link--active]="paginaActiva === 'facturacion'"
+        [routerLink]="['/dashboard/recepcionista/facturacion']">Facturación</a>
+      <a class="navbar__link"
+        [class.navbar__link--active]="paginaActiva === 'configuracion'"
+        [routerLink]="['/dashboard/configuracion']">Configuración</a>
+    </ng-container>
+
+    <!-- TERAPEUTA -->
+    <ng-container *ngIf="esTerapeuta">
+      <a class="navbar__link"
+        [class.navbar__link--active]="paginaActiva === 'inicio'"
+        [routerLink]="['/dashboard/terapeuta']">Inicio</a>
+      <a class="navbar__link"
+        [class.navbar__link--active]="paginaActiva === 'agenda'"
+        [routerLink]="['/dashboard/terapeuta/agenda']">Mi Agenda</a>
+      <a class="navbar__link"
+        [class.navbar__link--active]="paginaActiva === 'configuracion'"
+        [routerLink]="['/dashboard/configuracion']">Configuración</a>
+    </ng-container>
+
+    <!-- CLIENTE -->
+    <ng-container *ngIf="esCliente">
+      <a class="navbar__link"
+        [class.navbar__link--active]="paginaActiva === 'inicio'"
+        [routerLink]="['/dashboard/cliente']">Inicio</a>
+      <a class="navbar__link"
+        [class.navbar__link--active]="paginaActiva === 'reservas'"
+        [routerLink]="['/dashboard/cliente/reservas']">Mis Reservas</a>
+      <a class="navbar__link"
+        [class.navbar__link--active]="paginaActiva === 'configuracion'"
+        [routerLink]="['/dashboard/configuracion']">Configuración</a>
+    </ng-container>
+
+  </nav>
+
+  <div class="navbar__right">
+    <button class="navbar__notif">
+      <span class="material-symbols-outlined">notifications</span>
+      <span class="navbar__notif-dot"></span>
+    </button>
+    <button class="navbar__nueva-reserva"
+      *ngIf="esAdmin || esRecepcionista"
+      [routerLink]="esAdmin ? ['/dashboard/admin/reservas'] : ['/dashboard/recepcionista/reservas']">
+      Nueva Reserva
+    </button>
+    <div class="navbar__avatar">{{ nombre.charAt(0).toUpperCase() }}</div>
+    <button class="navbar__cerrar" (click)="cerrarSesion()">Cerrar sesión</button>
+  </div>
+
+</header>
+
+<!-- MOBILE BOTTOM NAV -->
+<nav class="mobile-nav">
+  <div class="mobile-nav__items">
+
+    <!-- ADMIN -->
+    <ng-container *ngIf="esAdmin">
+      <a class="mobile-nav__item" [class.mobile-nav__item--active]="paginaActiva === 'inicio'" [routerLink]="['/dashboard/admin']">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span>Inicio</span>
+      </a>
+      <a class="mobile-nav__item" [class.mobile-nav__item--active]="paginaActiva === 'agenda'" [routerLink]="['/dashboard/admin/agenda']">
+        <span class="material-symbols-outlined">calendar_month</span>
+        <span>Agenda</span>
+      </a>
+      <a class="mobile-nav__item" [class.mobile-nav__item--active]="paginaActiva === 'reservas'" [routerLink]="['/dashboard/admin/reservas']">
+        <span class="material-symbols-outlined">book_online</span>
+        <span>Reservas</span>
+      </a>
+      <a class="mobile-nav__item" [class.mobile-nav__item--active]="paginaActiva === 'usuarios'" [routerLink]="['/dashboard/admin/usuarios']">
+        <span class="material-symbols-outlined">group</span>
+        <span>Usuarios</span>
+      </a>
+      <a class="mobile-nav__item" [class.mobile-nav__item--active]="paginaActiva === 'configuracion'" [routerLink]="['/dashboard/configuracion']">
+        <span class="material-symbols-outlined">settings</span>
+        <span>Config</span>
+      </a>
+    </ng-container>
+
+    <!-- RECEPCIONISTA -->
+    <ng-container *ngIf="esRecepcionista">
+      <a class="mobile-nav__item" [class.mobile-nav__item--active]="paginaActiva === 'inicio'" [routerLink]="['/dashboard/recepcionista']">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span>Inicio</span>
+      </a>
+      <a class="mobile-nav__item" [class.mobile-nav__item--active]="paginaActiva === 'agenda'" [routerLink]="['/dashboard/recepcionista/agenda']">
+        <span class="material-symbols-outlined">calendar_month</span>
+        <span>Agenda</span>
+      </a>
+      <a class="mobile-nav__item" [class.mobile-nav__item--active]="paginaActiva === 'reservas'" [routerLink]="['/dashboard/recepcionista/reservas']">
+        <span class="material-symbols-outlined">book_online</span>
+        <span>Reservas</span>
+      </a>
+      <a class="mobile-nav__item" [class.mobile-nav__item--active]="paginaActiva === 'facturacion'" [routerLink]="['/dashboard/recepcionista/facturacion']">
+        <span class="material-symbols-outlined">receipt</span>
+        <span>Facturación</span>
+      </a>
+      <a class="mobile-nav__item" [class.mobile-nav__item--active]="paginaActiva === 'configuracion'" [routerLink]="['/dashboard/configuracion']">
+        <span class="material-symbols-outlined">settings</span>
+        <span>Config</span>
+      </a>
+    </ng-container>
+
+    <!-- TERAPEUTA -->
+    <ng-container *ngIf="esTerapeuta">
+      <a class="mobile-nav__item" [class.mobile-nav__item--active]="paginaActiva === 'inicio'" [routerLink]="['/dashboard/terapeuta']">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span>Inicio</span>
+      </a>
+      <a class="mobile-nav__item" [class.mobile-nav__item--active]="paginaActiva === 'agenda'" [routerLink]="['/dashboard/terapeuta/agenda']">
+        <span class="material-symbols-outlined">calendar_month</span>
+        <span>Mi Agenda</span>
+      </a>
+      <a class="mobile-nav__item" [class.mobile-nav__item--active]="paginaActiva === 'configuracion'" [routerLink]="['/dashboard/configuracion']">
+        <span class="material-symbols-outlined">settings</span>
+        <span>Config</span>
+      </a>
+    </ng-container>
+
+    <!-- CLIENTE -->
+    <ng-container *ngIf="esCliente">
+      <a class="mobile-nav__item" [class.mobile-nav__item--active]="paginaActiva === 'inicio'" [routerLink]="['/dashboard/cliente']">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span>Inicio</span>
+      </a>
+      <a class="mobile-nav__item" [class.mobile-nav__item--active]="paginaActiva === 'reservas'" [routerLink]="['/dashboard/cliente/reservas']">
+        <span class="material-symbols-outlined">calendar_month</span>
+        <span>Reservas</span>
+      </a>
+      <a class="mobile-nav__item" [class.mobile-nav__item--active]="paginaActiva === 'configuracion'" [routerLink]="['/dashboard/configuracion']">
+        <span class="material-symbols-outlined">settings</span>
+        <span>Config</span>
+      </a>
+    </ng-container>
+
+  </div>
+</nav>
