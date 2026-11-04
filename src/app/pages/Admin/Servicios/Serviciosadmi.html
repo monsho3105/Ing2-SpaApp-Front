@@ -1,0 +1,227 @@
+<app-navbar paginaActiva="servicios"></app-navbar>
+<main class="main">
+
+  <div class="page-header">
+    <div class="page-header__meta">
+      <span class="page-header__eyebrow">Catálogo de Servicios</span>
+      <h1 class="page-header__title">Gestión de Servicios</h1>
+      <p class="page-header__subtitle">
+        Defina y organice el catálogo de servicios de su centro de bienestar.
+      </p>
+    </div>
+    <button class="btn-primary" (click)="openAddModal()">
+      <span class="material-symbols-outlined">add</span>
+      Añadir Nuevo Servicio
+    </button>
+  </div>
+
+  <!-- Buscador y filtro -->
+  <div class="filter-bar">
+    <div class="navbar__search">
+      <span class="material-symbols-outlined">search</span>
+      <input type="text" placeholder="Buscar…" [(ngModel)]="busqueda" />
+    </div>
+    <label class="toggle-inactivos">
+      <input type="checkbox" [(ngModel)]="mostrarInactivos" />
+      Ver inactivos
+    </label>
+  </div>
+
+  <div class="services-grid">
+
+    <div class="empty-state" *ngIf="pageItems.length === 0">
+      <div class="empty-state__icon">
+        <span class="material-symbols-outlined">spa</span>
+      </div>
+      <h3 class="empty-state__title">Sin servicios registrados</h3>
+      <p class="empty-state__text">Añada un nuevo servicio para comenzar.</p>
+    </div>
+
+    <article
+      class="service-card"
+      *ngFor="let svc of pageItems; trackBy: trackService">
+
+      <div class="service-card__image-wrap">
+        <img
+          class="service-card__img"
+          [src]="svc.imagenUrl || placeholder"
+          [alt]="svc.nombre"
+          loading="lazy"
+          (error)="onImgError($event)" />
+        <div class="service-card__overlay"></div>
+
+        <span
+          class="service-card__status"
+          [class.service-card__status--active]="svc.estado === 'activo'"
+          [class.service-card__status--inactive]="svc.estado !== 'activo'">
+          {{ svc.estado === 'activo' ? 'Activo' : 'Inactivo' }}
+        </span>
+
+        <div class="service-card__actions">
+          <button
+            class="service-card__action-btn service-card__action-btn--edit"
+            (click)="openEditModal(svc)"
+            aria-label="Editar">
+            <span class="material-symbols-outlined">edit</span>
+          </button>
+          <button
+            class="service-card__action-btn service-card__action-btn--delete"
+            (click)="accionEstado(svc)"
+            [title]="svc.estado === 'activo' ? 'Desactivar' : 'Activar'"
+            aria-label="Cambiar estado">
+            <span class="material-symbols-outlined">
+              {{ svc.estado === 'activo' ? 'block' : 'check_circle' }}
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <div class="service-card__body">
+        <div class="service-card__header">
+          <div>
+            <h3 class="service-card__title">{{ svc.nombre }}</h3>
+            <p class="service-card__description">{{ svc.descripcion }}</p>
+          </div>
+          <span class="service-card__price">${{ svc.precio | number }}</span>
+        </div>
+        <div class="service-card__meta">
+          <div class="service-card__meta-item">
+            <span class="material-symbols-outlined">schedule</span>
+            <span>{{ svc.duracionMinutos }} MIN</span>
+          </div>
+        </div>
+      </div>
+    </article>
+
+  </div>
+
+  <div class="pagination">
+    <p class="pagination__label">
+      Mostrando {{ showingCount }} de {{ totalCount }} servicios
+    </p>
+    <div class="pagination__controls">
+      <button class="btn-icon" (click)="prevPage()" [disabled]="currentPage === 0">
+        <span class="material-symbols-outlined">chevron_left</span>
+      </button>
+      <div class="pagination__dots">
+        <button
+          class="pagination__dot"
+          *ngFor="let p of pageArray"
+          [class.active]="p === currentPage"
+          (click)="goToPage(p)">
+        </button>
+      </div>
+      <button class="btn-icon" (click)="nextPage()" [disabled]="currentPage >= totalPages - 1">
+        <span class="material-symbols-outlined">chevron_right</span>
+      </button>
+    </div>
+  </div>
+
+</main>
+
+<!-- MODAL ADD/EDIT -->
+<div
+  class="modal-backdrop"
+  [class.open]="showServiceModal"
+  (click)="closeServiceModal()"
+  role="dialog"
+  aria-modal="true">
+
+  <div class="modal" (click)="$event.stopPropagation()">
+
+    <div class="modal__header">
+      <div>
+        <span class="modal__eyebrow">{{ isEditing ? 'Editar Servicio' : 'Nuevo Servicio' }}</span>
+        <h2 class="modal__title">{{ isEditing ? 'Modificar Servicio' : 'Añadir Servicio' }}</h2>
+      </div>
+      <button class="modal__close" (click)="closeServiceModal()">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+
+    <div class="modal__body">
+      <div class="form-grid form-grid--2col">
+
+        <div class="form-group form-group--full">
+          <label class="form-label">Nombre del Servicio</label>
+          <input class="form-input" type="text" placeholder="ej. Masaje Relajante" [(ngModel)]="form.nombre" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Precio (COP)</label>
+          <div class="form-input-icon-wrap">
+            <span class="form-input-icon material-symbols-outlined">attach_money</span>
+            <input class="form-input" type="number" placeholder="0.00" min="0" step="0.01" [(ngModel)]="form.precio" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Duración (min)</label>
+          <div class="form-input-icon-wrap">
+            <span class="form-input-icon material-symbols-outlined">schedule</span>
+            <input class="form-input" type="number" placeholder="60" min="5" step="5" [(ngModel)]="form.duracionMinutos" />
+          </div>
+        </div>
+
+        <div class="form-group form-group--full">
+          <label class="form-label">Descripción</label>
+          <textarea class="form-textarea" placeholder="Describe el servicio…" [(ngModel)]="form.descripcion"></textarea>
+        </div>
+
+        <div class="form-group form-group--full">
+          <label class="form-label">URL de imagen</label>
+          <input class="form-input" type="url" placeholder="https://…" [(ngModel)]="form.imagenUrl" />
+        </div>
+
+      </div>
+    </div>
+
+    <div class="modal__footer">
+      <button type="button" class="btn-ghost" (click)="closeServiceModal()">Cancelar</button>
+      <button type="button" class="btn-primary" (click)="submitForm()">
+        <span class="material-symbols-outlined">save</span>
+        {{ isEditing ? 'Actualizar Servicio' : 'Guardar Servicio' }}
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL CONFIRMAR DESACTIVAR -->
+<div
+  class="modal-backdrop"
+  [class.open]="showConfirmModal"
+  (click)="closeConfirmModal()"
+  role="alertdialog"
+  aria-modal="true">
+
+  <div class="confirm-dialog" (click)="$event.stopPropagation()">
+    <div class="confirm-dialog__icon">
+      <span class="material-symbols-outlined">block</span>
+    </div>
+    <h3 class="confirm-dialog__title">Desactivar Servicio</h3>
+    <p class="confirm-dialog__text">
+      ¿Está seguro de que desea desactivar <strong>"{{ deletingName }}"</strong>?
+      El servicio no estará disponible para reservas.
+    </p>
+    <div class="confirm-dialog__actions">
+      <button class="btn-ghost" (click)="closeConfirmModal()">Cancelar</button>
+      <button class="btn-danger" (click)="confirmDesactivar()">
+        <span class="material-symbols-outlined">block</span>
+        Desactivar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- TOASTS -->
+<div class="toast-container">
+  <div
+    class="toast"
+    *ngFor="let t of toasts; trackBy: trackToast"
+    [class.toast--success]="t.type === 'success'"
+    [class.toast--error]="t.type === 'error'">
+    <span class="material-symbols-outlined">{{ t.icon }}</span>
+    {{ t.message }}
+  </div>
+</div>

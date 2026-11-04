@@ -1,0 +1,281 @@
+<app-navbar paginaActiva="reservas"></app-navbar>
+<main class="reservas-layout">
+
+  <div class="toast-container">
+    <div *ngFor="let t of toasts" class="toast" [ngClass]="'toast-' + t.type">
+      {{ t.message }}
+    </div>
+  </div>
+
+  <section class="reservas-main">
+    <header class="reservas-header">
+      <div class="header-top-row">
+        <h1 class="reservas-titulo">Nueva <em>Reserva</em></h1>
+        <button class="btn-ver-calendario" (click)="abrirCalendario()">
+          📅 Ver Calendario
+        </button>
+      </div>
+    </header>
+
+    <div class="buscador-wrapper">
+      <div class="buscador-container">
+        <span class="buscador-icon">&#9906;</span>
+        <input
+          type="text"
+          class="buscador-input"
+          placeholder="Buscar servicio..."
+          [(ngModel)]="searchQuery"
+          (ngModelChange)="filtrarServicios()"
+        />
+        <button *ngIf="searchQuery" class="buscador-clear" (click)="limpiarBusqueda()">&#10005;</button>
+      </div>
+    </div>
+
+    <div class="servicios-grid" *ngIf="serviciosFiltrados.length > 0; else sinResultados">
+      <article
+        class="servicio-card"
+        *ngFor="let s of serviciosFiltrados"
+        [class.seleccionado]="estaSeleccionado(s)"
+        (click)="seleccionarServicio(s)"
+        tabindex="0"
+        (keydown.enter)="seleccionarServicio(s)">
+        <div class="card-badge" *ngIf="estaSeleccionado(s)">✓ Seleccionado</div>
+        <div class="card-imagen-wrapper">
+          <img [src]="s.imagenUrl || placeholder" [alt]="s.nombre" class="card-imagen" loading="lazy" (error)="onImgError($event)" />
+          <div class="card-imagen-overlay"></div>
+        </div>
+        <div class="card-body">
+          <div class="card-header-row">
+            <h3 class="card-titulo">{{ s.nombre }}</h3>
+            <span class="card-precio">${{ s.precio | number }}</span>
+          </div>
+          <div class="card-meta">
+            <span class="card-meta-item">&#9202; {{ s.duracionMinutos }} min</span>
+          </div>
+          <p class="card-descripcion">{{ s.descripcion }}</p>
+        </div>
+      </article>
+    </div>
+
+    <ng-template #sinResultados>
+      <div class="sin-resultados">
+        <p>No se encontraron servicios</p>
+        <button class="btn-limpiar" (click)="limpiarBusqueda()">Ver todos</button>
+      </div>
+    </ng-template>
+  </section>
+
+  <aside class="reservas-sidebar">
+    <div class="sidebar-panel">
+      <h2 class="sidebar-titulo">Resumen de Reserva</h2>
+
+      <!-- Servicios seleccionados -->
+      <div class="sidebar-section">
+        <p class="sidebar-label">Servicios ({{ serviciosSeleccionados.length }})</p>
+        <div *ngIf="serviciosSeleccionados.length > 0; else sinServicio">
+          <div class="sidebar-servicio" *ngFor="let s of serviciosSeleccionados">
+            <div>
+              <h4 class="sidebar-servicio-nombre">{{ s.nombre }}</h4>
+              <p class="sidebar-meta">{{ s.duracionMinutos }} min</p>
+            </div>
+            <span class="sidebar-servicio-precio">${{ s.precio | number }}</span>
+          </div>
+        </div>
+        <ng-template #sinServicio>
+          <p class="sidebar-placeholder">Selecciona uno o más servicios</p>
+        </ng-template>
+      </div>
+
+      <!-- Cliente — solo admin/recepcionista -->
+      <div class="sidebar-section" *ngIf="!esCliente">
+        <p class="sidebar-label">Cliente</p>
+        <div class="cliente-search-wrapper">
+          <input
+            class="form-input"
+            type="text"
+            placeholder="Buscar por nombre o email..."
+            [(ngModel)]="clienteBusqueda"
+            (ngModelChange)="buscarCliente()"
+          />
+          <button *ngIf="clienteSeleccionado" class="btn-clear-small" (click)="limpiarCliente()">&#10005;</button>
+        </div>
+        <div class="cliente-resultados" *ngIf="clientesEncontrados.length > 0">
+          <div class="cliente-item" *ngFor="let u of clientesEncontrados" (click)="elegirCliente(u)">
+            <span class="cliente-nombre">{{ u.nombre }}</span>
+            <span class="cliente-correo">{{ u.correo }}</span>
+          </div>
+        </div>
+        <p class="buscando-text" *ngIf="buscandoCliente">Buscando...</p>
+        <div class="cliente-seleccionado" *ngIf="clienteSeleccionado">
+          <span>✓ {{ clienteSeleccionado.nombre }}</span>
+          <span class="cliente-correo">{{ clienteSeleccionado.correo }}</span>
+        </div>
+      </div>
+
+      <!-- Terapeuta — solo admin/recepcionista -->
+      <div class="sidebar-section" *ngIf="!esCliente">
+        <p class="sidebar-label">Terapeuta</p>
+        <div class="terapeutas-lista">
+          <div
+            class="terapeuta-item"
+            *ngFor="let t of terapeutas"
+            [class.activo]="terapeutaSeleccionado?.id === t.id"
+            (click)="seleccionarTerapeuta(t)">
+            <div class="terapeuta-avatar">{{ t.nombre.charAt(0) }}</div>
+            <span>{{ t.nombre }}</span>
+          </div>
+        </div>
+        <p class="sidebar-placeholder" *ngIf="terapeutas.length === 0">Sin terapeutas disponibles</p>
+      </div>
+
+      <!-- Mensaje terapeuta automático para cliente -->
+      <div class="sidebar-section" *ngIf="esCliente">
+        <p class="sidebar-label">Terapeuta</p>
+        <p class="sidebar-placeholder">
+          <span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle">auto_awesome</span>
+          Se asignará automáticamente el mejor disponible
+        </p>
+      </div>
+
+      <!-- Calendario mini -->
+      <div class="sidebar-section">
+        <p class="sidebar-label">Fecha</p>
+        <div class="calendario">
+          <div class="calendario-header">
+            <button class="cal-nav" (click)="mesAnterior()">&#8249;</button>
+            <span class="cal-mes">{{ nombresMeses[mesActual.getMonth()] }} {{ mesActual.getFullYear() }}</span>
+            <button class="cal-nav" (click)="mesSiguiente()">&#8250;</button>
+          </div>
+          <div class="calendario-dias-nombre">
+            <span *ngFor="let d of nombresDias">{{ d }}</span>
+          </div>
+          <div class="calendario-grid">
+            <div
+              *ngFor="let dia of diasCalendario"
+              class="cal-dia"
+              [class.vacio]="!dia"
+              [class.pasado]="esPasado(dia)"
+              [class.hoy]="esHoyMini(dia)"
+              [class.seleccionado]="esFechaSeleccionada(dia)"
+              (click)="seleccionarFecha(dia)">
+              {{ dia ? dia.getDate() : '' }}
+            </div>
+          </div>
+        </div>
+        <p class="fecha-seleccionada-text" *ngIf="fechaSeleccionada">
+          📅 {{ fechaSeleccionada | date:'dd/MM/yyyy' }}
+        </p>
+      </div>
+
+      <!-- Hora -->
+      <div class="sidebar-section">
+  <p class="sidebar-label">Hora</p>
+  <p class="sidebar-placeholder" *ngIf="cargandoDisponibilidad">
+    <span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle">hourglass_empty</span>
+    Verificando disponibilidad...
+  </p>
+  <div class="horas-grid" *ngIf="!usarHoraManual && !cargandoDisponibilidad">
+    <button
+  class="hora-btn"
+  *ngFor="let h of horas"
+  [class.activa]="horaSeleccionada === h"
+  [class.hora-btn--ocupada]="estaOcupada(h)"
+  (click)="clickHora(h)">
+  {{ h.slice(0,5) }}
+  <span *ngIf="estaOcupada(h)" class="material-symbols-outlined" style="font-size:12px">block</span>
+</button>
+  </div>
+  <div class="hora-manual-wrapper">
+    <label class="hora-manual-toggle">
+      <input type="checkbox" [(ngModel)]="usarHoraManual" (change)="horaSeleccionada = ''" />
+      <span>Otra hora</span>
+    </label>
+    <input
+      *ngIf="usarHoraManual"
+      class="form-input"
+      type="time"
+      [(ngModel)]="horaManual"
+    />
+  </div>
+</div>
+
+      <!-- Mensaje disponibilidad (solo cliente) -->
+      <div class="disponibilidad-msg" *ngIf="mensajeDisponibilidad">
+        <span class="material-symbols-outlined">warning</span>
+        {{ mensajeDisponibilidad }}
+      </div>
+
+      <!-- Totales -->
+      <div class="sidebar-totales">
+        <div class="total-fila" *ngFor="let s of serviciosSeleccionados">
+          <span>{{ s.nombre }}</span>
+          <span>${{ s.precio | number }}</span>
+        </div>
+        <div class="total-divider"></div>
+        <div class="total-fila total-final">
+          <span>Total</span>
+          <span class="total-monto">${{ calcularSubtotal() | number }}</span>
+        </div>
+      </div>
+
+      <button
+        class="btn-confirmar"
+        [disabled]="!puedeConfirmar() || isSubmitting || verificandoDisponibilidad"
+        (click)="confirmarReserva()">
+        {{ isSubmitting || verificandoDisponibilidad ? 'Procesando...' : 'Confirmar Reserva' }}
+      </button>
+
+      <p class="sidebar-politica">Política de cancelación de 24 horas aplicable.</p>
+    </div>
+  </aside>
+
+</main>
+
+<!-- MODAL CALENDARIO SEMANAL -->
+<div class="cal-modal-backdrop" [class.open]="mostrarCalendario" (click)="cerrarCalendario()">
+  <div class="cal-modal" (click)="$event.stopPropagation()">
+    <div class="cal-modal-header">
+      <div class="cal-modal-nav">
+        <button class="cal-modal-nav-btn" (click)="semanaAnterior()">&#8249;</button>
+        <span class="cal-modal-titulo">{{ getSemanaLabel() }}</span>
+        <button class="cal-modal-nav-btn" (click)="semanaSiguiente()">&#8250;</button>
+      </div>
+      <button class="cal-modal-close" (click)="cerrarCalendario()">&#10005;</button>
+    </div>
+    <div class="cal-modal-body">
+      <div class="cal-horas-col">
+        <div class="cal-dia-header"></div>
+        <div class="cal-horas-lista">
+          <div class="cal-hora-label" *ngFor="let h of horasCalendario">{{ h }}</div>
+        </div>
+      </div>
+      <div class="cal-dia-col" *ngFor="let dia of diasSemana">
+        <div class="cal-dia-header" [class.hoy]="esHoy(dia)">
+          <span class="cal-dia-nombre">{{ getNombreDia(dia) }}</span>
+          <span class="cal-dia-numero" [class.hoy]="esHoy(dia)">{{ dia.getDate() }}</span>
+        </div>
+        <div class="cal-dia-slots">
+          <div class="cal-hora-line" *ngFor="let h of horasCalendario"></div>
+          <div
+            *ngFor="let r of getReservasDia(dia)"
+            class="cal-evento"
+            [class.cal-evento--pendiente]="r.estado === 'pendiente'"
+            [class.cal-evento--cancelada]="r.estado === 'cancelada'"
+            [class.cal-evento--finalizada]="r.estado === 'finalizada'"
+            [style.top.px]="getTopOffset(r.horaInicio)"
+            [style.height.px]="getAltura(r.horaInicio, r.horaFin)">
+            <span class="cal-evento-hora">{{ r.horaInicio.slice(0,5) }} - {{ r.horaFin.slice(0,5) }}</span>
+            <span class="cal-evento-cliente">{{ r.nombreCliente }}</span>
+            <span class="cal-evento-servicio">{{ r.nombresServicios.join(', ') }}</span>
+            <span class="cal-evento-terapeuta">{{ r.nombreTerapeuta }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="cal-leyenda">
+      <span class="cal-leyenda-item cal-leyenda--pendiente">Pendiente</span>
+      <span class="cal-leyenda-item cal-leyenda--cancelada">Cancelada</span>
+      <span class="cal-leyenda-item cal-leyenda--finalizada">Finalizada</span>
+    </div>
+  </div>
+</div>
