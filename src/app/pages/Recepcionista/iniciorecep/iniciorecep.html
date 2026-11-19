@@ -1,0 +1,178 @@
+<app-navbar paginaActiva="inicio"></app-navbar>
+
+<div class="recep-shell">
+
+  <main class="recep-main">
+
+    <div class="welcome-section">
+      <span class="eyebrow">{{ fechaHoy }} · {{ horaActual }}</span>
+      <h1 class="welcome-title">Bienvenida, <em>{{ nombre }}</em></h1>
+      <p class="welcome-sub">Gestiona las citas, reservas y atención al cliente del centro de bienestar</p>
+    </div>
+
+    <!-- KPIs -->
+    <section class="kpi-grid">
+      <div class="kpi-card">
+        <span class="material-symbols-outlined kpi-icon">calendar_today</span>
+        <div>
+          <p class="kpi-label">Citas Hoy</p>
+          <p class="kpi-value">{{ citasHoy }}</p>
+        </div>
+      </div>
+      <div class="kpi-card kpi-card--pendiente">
+        <span class="material-symbols-outlined kpi-icon">schedule</span>
+        <div>
+          <p class="kpi-label">Pendientes</p>
+          <p class="kpi-value">{{ citasPendientes }}</p>
+        </div>
+      </div>
+      <div class="kpi-card kpi-card--confirmada">
+        <span class="material-symbols-outlined kpi-icon">check_circle</span>
+        <div>
+          <p class="kpi-label">Confirmadas</p>
+          <p class="kpi-value">{{ citasConfirmadas }}</p>
+        </div>
+      </div>
+      <div class="kpi-card kpi-card--monto">
+        <span class="material-symbols-outlined kpi-icon">payments</span>
+        <div>
+          <p class="kpi-label">Por Cobrar Hoy</p>
+          <p class="kpi-value">${{ totalPendienteHoy | number }}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Accesos Rápidos -->
+    <section class="accesos-rapidos">
+      <button class="acceso-btn acceso-btn--primary" (click)="irANuevaReserva()">
+        <span class="material-symbols-outlined">add_circle</span>
+        Nueva Reserva
+      </button>
+      <button class="acceso-btn" (click)="irAAgenda()">
+        <span class="material-symbols-outlined">calendar_month</span>
+        Ver Agenda
+      </button>
+      <button class="acceso-btn" (click)="irAFacturacion()">
+        <span class="material-symbols-outlined">receipt_long</span>
+        Facturación
+      </button>
+    </section>
+
+    <!-- Grid principal -->
+    <div class="main-grid">
+
+      <!-- Citas de hoy -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Citas de Hoy</h2>
+          <div class="filtros-tabs">
+            <button class="tab-btn"
+              [class.tab-btn--active]="filtroActivo === 'todas'"
+              (click)="cambiarFiltro('todas')">Todas</button>
+            <button class="tab-btn"
+              [class.tab-btn--active]="filtroActivo === 'pendientes'"
+              (click)="cambiarFiltro('pendientes')">Pendientes</button>
+            <button class="tab-btn"
+              [class.tab-btn--active]="filtroActivo === 'confirmadas'"
+              (click)="cambiarFiltro('confirmadas')">Confirmadas</button>
+          </div>
+        </div>
+
+        <div class="citas-lista" *ngIf="reservasFiltradas.length > 0; else sinCitas">
+          <div class="cita-item"
+            *ngFor="let r of reservasFiltradas"
+            [class.cita-item--cancelada]="r.estado === 'cancelada'"
+            [class.cita-item--finalizada]="r.estado === 'finalizada'">
+            <div class="cita-hora">{{ r.horaInicio.slice(0,5) }}</div>
+            <div class="cita-info">
+              <p class="cita-cliente">{{ r.nombreCliente }}</p>
+              <p class="cita-detalle">{{ r.nombresServicios?.join(', ') }} · {{ r.nombreTerapeuta }}</p>
+            </div>
+            <div class="cita-acciones">
+              <span class="estado-badge" [class]="getEstadoClass(r.estado)">
+                <span class="material-symbols-outlined">{{ getEstadoIcon(r.estado) }}</span>
+                {{ r.estado }}
+              </span>
+              <button class="btn-confirmar"
+                *ngIf="r.estado === 'pendiente'"
+                [disabled]="procesandoReserva === r.idReserva"
+                (click)="cambiarEstado(r, 'confirmada')">
+                {{ procesandoReserva === r.idReserva ? 'Procesando...' : 'Confirmar' }}
+              </button>
+              <button class="btn-proceso"
+                *ngIf="r.estado === 'confirmada'"
+                [disabled]="procesandoReserva === r.idReserva"
+                (click)="cambiarEstado(r, 'en_proceso')">
+                {{ procesandoReserva === r.idReserva ? 'Procesando...' : 'Iniciar' }}
+              </button>
+              <button class="btn-finalizar"
+                *ngIf="r.estado === 'en_proceso'"
+                [disabled]="procesandoReserva === r.idReserva"
+                (click)="cambiarEstado(r, 'finalizada')">
+                {{ procesandoReserva === r.idReserva ? 'Procesando...' : 'Finalizar' }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <ng-template #sinCitas>
+          <div class="empty-state">
+            <span class="material-symbols-outlined">event_busy</span>
+            <p>No hay citas para hoy</p>
+          </div>
+        </ng-template>
+      </div>
+
+      <!-- Columna derecha -->
+      <div class="right-col">
+
+        <!-- Buscar cliente -->
+        <div class="card">
+          <h2 class="card-title">Buscar Cliente</h2>
+          <div class="search-box">
+            <span class="material-symbols-outlined">search</span>
+            <input
+              type="text"
+              placeholder="Nombre del cliente..."
+              [(ngModel)]="busquedaCliente"
+              (ngModelChange)="buscarCliente()" />
+          </div>
+          <div class="clientes-lista" *ngIf="clientesEncontrados.length > 0">
+            <div class="cliente-item" *ngFor="let c of clientesEncontrados">
+              <div class="cliente-avatar">{{ c.nombre.charAt(0).toUpperCase() }}</div>
+              <div class="cliente-info">
+                <p class="cliente-nombre">{{ c.nombre }}</p>
+                <p class="cliente-correo">{{ c.correo }}</p>
+              </div>
+            </div>
+          </div>
+          <p class="buscando-text" *ngIf="buscando">Buscando...</p>
+          <p class="sin-resultados" *ngIf="!buscando && busquedaCliente.length > 1 && clientesEncontrados.length === 0">
+            Sin resultados
+          </p>
+        </div>
+
+        <!-- Terapeutas disponibles -->
+        <div class="card">
+          <h2 class="card-title">Terapeutas</h2>
+          <div class="terapeutas-lista">
+            <div class="terapeuta-item" *ngFor="let t of terapeutas">
+              <div class="terapeuta-avatar">{{ t.nombre.charAt(0).toUpperCase() }}</div>
+              <div class="terapeuta-info">
+                <p class="terapeuta-nombre">{{ t.nombre }}</p>
+                <p class="terapeuta-rol">Terapeuta</p>
+              </div>
+              <span class="terapeuta-badge">Activo</span>
+            </div>
+            <div class="empty-state" *ngIf="terapeutas.length === 0">
+              <span class="material-symbols-outlined">person_off</span>
+              <p>Sin terapeutas registrados</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+</div>
